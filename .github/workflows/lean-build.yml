@@ -1,0 +1,19 @@
+name: Lean 4 Build & Verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lean 4
+        uses: leanprover/lean4-action@v1
+        with:
+          lean-version: v4.14.0
+      - name: Build and verify theorems
+        run: lake build
