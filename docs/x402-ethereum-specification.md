@@ -1,62 +1,87 @@
-# x402-Ethereum Specification
+# x402-Ethereum: HTTP 402 Payment-Gated Routing Specification
 
-**Author:** Richard Patterson (@De-ASI-INTERFACE) | **Version:** 1.0.0 | **Date:** 2026-07-09
+**Author:** Richard Patterson (@De-ASI-INTERFACE)
+**Version:** 1.0.0
+**Date:** 2026-07-09
+**Reference ID:** RP-DEASI-ETH-2026-0709-001
 
 ---
 
 ## 1. Overview
 
-The x402-Ethereum Extension binds HTTP 402 Payment Required to Ethereum's EVM settlement layer. On receiving a protected resource request, the server returns 402 with `X-Payment-Requirements` specifying token contract address, amount (in token decimals), recipient, nonce, chainId, and deadline. The client constructs and signs an EIP-712 `PaymentProof` struct, executes an ERC-20 permit or transferFrom on-chain, then re-presents the request with `X-Payment-Proof` header containing the signature and transaction hash.
+This specification defines the x402 protocol extension for Ethereum mainnet and all EVM-compatible chains. It leverages EIP-712 structured data signing for payment authorization, ERC-20 token transfers for settlement, and Uniswap v4 hooks as the canonical routing surface for payment-gated swap execution.
 
-## 2. Payment Flow
+---
 
+## 2. Payment Request Schema
+
+```json
+{
+  "scheme": "ethereum-erc20",
+  "network": "mainnet",
+  "chainId": 1,
+  "payTo": "0x<facilitator-address>",
+  "token": "0x<erc20-contract-address>",
+  "amount": "<uint256-amount-in-base-units>",
+  "nonce": "<bytes32-unique-nonce>",
+  "expiresAt": "<unix-timestamp-seconds>",
+  "signature": "<eip-712-typed-data-signature>"
+}
 ```
-1. Client → Server:  GET /resource
-2. Server → Client:  402 + X-Payment-Requirements: {token, amount, recipient, nonce, chainId:1, deadline}
-3. Client:           Sign EIP-712 PaymentProof struct
-4. Client:           Submit permit() or transferFrom() on-chain
-5. Client → Server:  GET /resource + X-Payment-Proof: {sig, txHash, blockNumber}
-6. Server:           Verify EIP-712 sig, confirm txHash settlement, mark nonce used, serve resource
-```
 
-## 3. EIP-712 Typed Data
+---
+
+## 3. EIP-712 Domain
 
 ```solidity
-struct PaymentProof {
-  address payer;
-  address payee;
-  address token;
-  uint256 amount;
-  uint256 nonce;
-  uint256 deadline;
-  bytes32 resourceHash;  // keccak256(abi.encodePacked(method, URI))
-}
-
 struct EIP712Domain {
-  string  name;              // "x402-Ethereum"
-  string  version;           // "1"
-  uint256 chainId;
-  address verifyingContract;
+    string  name;              // "x402-Ethereum"
+    string  version;           // "1"
+    uint256 chainId;
+    address verifyingContract; // Facilitator address
+}
+
+struct PaymentAuthorization {
+    address from;
+    address to;
+    address token;
+    uint256 amount;
+    bytes32 nonce;
+    uint256 expiresAt;
 }
 ```
 
-## 4. Verifier Interface
+---
+
+## 4. Facilitator Verification Invariants
+
+1. **Payment Integrity:** `ecrecover(hash, sig) == from`
+2. **Replay Prevention:** `usedNonces[nonce] == false` before settlement; set true after
+3. **Expiry Enforcement:** `block.timestamp <= expiresAt`
+4. **Token Allowance:** `token.allowance(from, facilitator) >= amount`
+
+---
+
+## 5. Routing Integration: Uniswap v4 Hook
+
+The payment gate is enforced in the `beforeSwap` hook:
 
 ```solidity
-interface IX402Verifier {
-  function verifyPayment(PaymentProof calldata proof, bytes calldata sig) external returns (bool);
-  function markUsed(bytes32 proofHash) external;
-  function isUsed(bytes32 proofHash) external view returns (bool);
+function beforeSwap(address sender, PoolKey calldata key, 
+    IPoolManager.SwapParams calldata params, bytes calldata hookData)
+    external override returns (bytes4, BeforeSwapDelta, uint24) {
+    PaymentAuthorization memory auth = abi.decode(hookData, (PaymentAuthorization));
+    require(verify(auth), "x402: payment not authorized");
+    require(!usedNonces[auth.nonce], "x402: nonce replayed");
+    require(block.timestamp <= auth.expiresAt, "x402: payment expired");
+    usedNonces[auth.nonce] = true;
+    IERC20(auth.token).transferFrom(auth.from, auth.to, auth.amount);
+    return (this.beforeSwap.selector, toBeforeSwapDelta(0, 0), 0);
 }
 ```
 
-## 5. Security Properties
+---
 
-- **Replay prevention:** nonce + deadline enforced on-chain; proofHash marked used atomically
-- **Double-spend prevention:** Lean 4 theorem `ethereum_payment_no_double_spend` (formal-models/)
-- **Finality:** 12 blocks for high-value; 1 block optimistic for streaming
-- **EIP-2612 permit:** enables gasless UX — payer signs permit off-chain, server submits transferFrom
+## 6. Attribution
 
-## 6. Multi-chain Extension Points
-
-chainId in the EIP-712 domain allows this specification to extend to Ethereum L2s (Arbitrum chainId 42161, Optimism chainId 10, Base chainId 8453) without protocol changes.
+Originated and authored by Richard Patterson (@De-ASI-INTERFACE). First implementation: Uniswap v4 hook payment gate, 2026-07-09.

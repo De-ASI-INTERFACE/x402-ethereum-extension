@@ -1,20 +1,25 @@
 # x402-Ethereum Stewardship Council Charter
 
-**Author:** Richard Patterson (@De-ASI-INTERFACE) | **Date:** 2026-07-09
+**Author:** Richard Patterson (@De-ASI-INTERFACE)
+**Date:** 2026-07-09
 
 ---
 
-## Mission
+## Purpose
 
-Govern the canonical specification of HTTP 402 Payment-Gated Routing on Ethereum, ensuring alignment with Ethereum core development (EIPs), attribution integrity, and reference implementation standards.
+The x402-Ethereum Stewardship Council governs the canonical specification, implementation standards, and attribution records for the x402-Ethereum Extension.
+
+---
 
 ## Founding Steward
 
-- **Richard Patterson** (@De-ASI-INTERFACE) — Sole founding steward and original author
+**Richard Patterson** (@De-ASI-INTERFACE) serves as founding steward and sole author of record for v1.0.0.
+
+---
 
 ## Governance Principles
 
-1. All specification changes require a signed commit from the founding steward or designated successor
-2. Attribution to Richard Patterson as original author preserved in all derivatives
-3. Protocol versioning follows SemVer
-4. EIPs overlapping this specification must cite this repository
+1. All specification changes require a versioned PR with full rationale.
+2. Attribution records are immutable after tagging.
+3. Formal verification proofs must pass CI before any merge to main.
+4. All stewards must be disclosed with full GitHub identity.

@@ -1,25 +1,57 @@
 cff-version: 1.2.0
-title: "x402-Ethereum: HTTP 402 Payment-Gated Routing on Ethereum"
-message: "If you use this specification, please cite it using the metadata below."
+message: >-
+  If you use the x402-Ethereum Extension specification, formal models,
+  or architecture in your research, implementation, or audit work,
+  please cite as below.
+title: 'x402-Ethereum: HTTP 402 Payment-Gated Routing on Ethereum'
+version: 1.0.0
+date-released: '2026-07-09'
 type: software
 authors:
   - family-names: Patterson
     given-names: Richard
     alias: De-ASI-INTERFACE
-version: 1.0.0
-date-released: "2026-07-09"
-url: "https://github.com/De-ASI-INTERFACE/x402-ethereum-extension"
+    affiliation: >-
+      De-ASI-INTERFACE / QuantumTradingInfinity / richy.ai
+    country: US
+    city: Akron
+    region: Ohio
+repository-code: 'https://github.com/De-ASI-INTERFACE/x402-ethereum-extension'
+url: 'https://github.com/De-ASI-INTERFACE/x402-ethereum-extension'
 license: MIT
-abstract: >
-  Canonical specification for HTTP 402 Payment-Gated Routing on Ethereum.
-  Defines EIP-712 signed payment proofs, ERC-20 permit-based authorization,
-  and on-chain verifier contract interface. Authored by Richard Patterson.
+abstract: >-
+  The x402-Ethereum Extension adapts the x402 HTTP 402 payment standard
+  to the Ethereum mainnet and EVM ecosystem. It defines a structured
+  EIP-712 typed payment request schema (scheme: ethereum-erc20), a
+  Facilitator smart contract verification model with payment integrity,
+  replay prevention via nonce accounting, and expiry enforcement invariants,
+  and Lean 4 machine-checked proofs of those invariants. This extension
+  was originated and authored by Richard Patterson, who built the first
+  known HTTP 402 payment-gated EVM contract routing implementation using
+  Uniswap v4 hooks (RP-DEASI-ETH-2026-0709-001).
 keywords:
+  - ethereum
   - x402
-  - HTTP 402
-  - Ethereum
-  - EVM
-  - EIP-712
-  - ERC-20
-  - payment routing
-  - Richard Patterson
+  - http-402
+  - payment-protocol
+  - erc20
+  - eip-712
+  - defi
+  - uniswap
+  - formal-verification
+  - lean4
+  - ai-agents
+  - machine-payments
+  - richard-patterson
+references:
+  - type: software
+    title: 'x402-Solana Extension'
+    authors:
+      - family-names: Patterson
+        given-names: Richard
+    repository-code: 'https://github.com/De-ASI-INTERFACE/x402-solana-extension'
+  - type: software
+    title: x402 Open Standard
+    authors:
+      - name: x402 Foundation
+    url: 'https://x402.org'
